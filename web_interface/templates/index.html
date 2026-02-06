@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EEG ATCNet Evaluation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-brain"></i>
+                <h1>NEURO<span class="highlight">TEST</span></h1>
+            </div>
+
+            <div class="control-group">
+                <label>Subject</label>
+                <div class="selector">
+                    <button class="selector-btn prev" onclick="adjustSubject(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span id="subject-display">1</span>
+                    <button class="selector-btn next" onclick="adjustSubject(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Strategy</label>
+                <select id="strategy-select">
+                    <option value="dependent">Subject Dependent</option>
+                    <option value="loso">Subject Independent (LOSO)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Model Format</label>
+                <select id="model-select">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+
+            <button id="load-btn" class="primary-btn pulse-on-hover">
+                <i class="fa-solid fa-download"></i> Load Model
+            </button>
+
+            <div class="status-panel">
+                <div class="status-item">
+                    <span class="label">Status</span>
+                    <span id="system-status" class="value ready">Ready</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Loaded</span>
+                    <span id="current-model-name" class="value">None</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Load Time</span>
+                    <span id="load-time" class="value">--</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('single')">Single Trial Analysis</button>
+                <button class="tab-btn" onclick="switchTab('batch')">Batch Evaluation</button>
+            </div>
+
+            <!-- Single Trial View -->
+            <section id="single-view" class="view-panel active">
+                <div class="toolbar">
+                    <div class="trial-nav">
+                        <button onclick="getTrial('prev')"><i class="fa-solid fa-backward"></i></button>
+                        <button onclick="getTrial('random')"><i class="fa-solid fa-shuffle"></i> Random</button>
+                        <button onclick="getTrial('next')"><i class="fa-solid fa-forward"></i></button>
+                        <input type="number" id="trial-index-input" placeholder="Trial #" min="0" onchange="getTrial('index')">
+                    </div>
+                    <div class="trial-info">
+                        Trial ID: <span id="current-trial-id">--</span> / <span id="total-trials">--</span>
+                        <span class="separator">|</span>
+                        Label: <span id="true-label" class="highlight-text">--</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="eegChart"></canvas>
+                </div>
+
+                <div class="action-bar">
+                    <button id="predict-btn" class="action-btn" disabled>
+                        <i class="fa-solid fa-bolt"></i> Run Prediction
+                    </button>
+                    
+                    <div class="prediction-result" id="pred-result-box">
+                        <div class="pred-item">
+                            <span class="p-label">Predicted</span>
+                            <span class="p-value" id="pred-class">--</span>
+                        </div>
+                        <div class="pred-item">
+                            <span class="p-label">Confidence</span>
+                            <span class="p-value" id="pred-conf">--</span>
+                        </div>
+                        <div class="pred-item">
+                            <span class="p-label">Time</span>
+                            <span class="p-value" id="pred-time">-- ms</span>
+                        </div>
+                        <div class="pred-icon" id="pred-icon"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Batch View -->
+            <section id="batch-view" class="view-panel">
+                <div class="batch-header">
+                    <button id="run-all-btn" class="primary-btn">
+                        <i class="fa-solid fa-play"></i> Run All Trials
+                    </button>
+                    <div class="batch-stats">
+                        <div class="stat-box">
+                            <span class="s-label">Accuracy</span>
+                            <span class="s-value" id="batch-acc">--%</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="s-label">Avg Time</span>
+                            <span class="s-value" id="batch-time">-- ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>True Label</th>
+                                <th>Predicted</th>
+                                <th>Result</th>
+                                <th>Time (ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -35,6 +35,7 @@ from sklearn.model_selection import train_test_split
 import models 
 from preprocess import get_data
 # from keras.utils.vis_utils import plot_model
+tf.config.set_visible_devices([], 'GPU')
 
 
 #%%
@@ -341,28 +342,6 @@ def getModel(model_name, dataset_conf, from_logits = False):
             tcn_dropout = 0.3, 
             tcn_activation='elu',
             )     
-    elif(model_name == 'TCNet_Fusion'):
-        # Train using TCNet_Fusion: https://doi.org/10.1016/j.bspc.2021.102826
-        model = models.TCNet_Fusion(n_classes = n_classes, Chans=n_channels, Samples=in_samples)      
-    elif(model_name == 'EEGTCNet'):
-        # Train using EEGTCNet: https://arxiv.org/abs/2006.00622
-        model = models.EEGTCNet(n_classes = n_classes, Chans=n_channels, Samples=in_samples)          
-    elif(model_name == 'EEGNet'):
-        # Train using EEGNet: https://arxiv.org/abs/1611.08024
-        model = models.EEGNet_classifier(n_classes = n_classes, Chans=n_channels, Samples=in_samples) 
-    elif(model_name == 'EEGNeX'):
-        # Train using EEGNeX: https://arxiv.org/abs/2207.12369
-        model = models.EEGNeX_8_32(n_timesteps = in_samples , n_features = n_channels, n_outputs = n_classes)
-    elif(model_name == 'DeepConvNet'):
-        # Train using DeepConvNet: https://doi.org/10.1002/hbm.23730
-        model = models.DeepConvNet(nb_classes = n_classes , Chans = n_channels, Samples = in_samples)
-    elif(model_name == 'ShallowConvNet'):
-        # Train using ShallowConvNet: https://doi.org/10.1002/hbm.23730
-        model = models.ShallowConvNet(nb_classes = n_classes , Chans = n_channels, Samples = in_samples)
-    elif(model_name == 'MBEEG_SENet'):
-        # Train using MBEEG_SENet: https://www.mdpi.com/2075-4418/12/4/995
-        model = models.MBEEG_SENet(nb_classes = n_classes , Chans = n_channels, Samples = in_samples)
-
     else:
         raise Exception("'{}' model is not supported yet!".format(model_name))
 
@@ -371,7 +350,7 @@ def getModel(model_name, dataset_conf, from_logits = False):
 #%%
 def run():
     # Define dataset parameters
-    dataset = 'HGD' # Options: 'BCI2a','HGD', 'CS2R'
+    dataset = 'BCI2a' # Options: 'BCI2a','HGD', 'CS2R'
     
     if dataset == 'BCI2a': 
         in_samples = 1125
@@ -379,7 +358,7 @@ def run():
         n_sub = 9
         n_classes = 4
         classes_labels = ['Left hand', 'Right hand','Foot','Tongue']
-        data_path = os.path.expanduser('~') + '/BCI Competition IV/BCI Competition IV-2a/BCI Competition IV 2a mat/'
+        data_path = './BCI2a/'
     elif dataset == 'HGD': 
         in_samples = 1125
         n_channels = 44
