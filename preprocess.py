@@ -136,9 +136,10 @@ def load_BCI2a_data(data_path, subject, training, all_trials = True):
         for trial in range(0,a_trial.size):
              if(a_artifacts[trial] != 0 and not all_trials):
                  continue
-             data_return[NO_valid_trial,:,:] = np.transpose(a_X[int(a_trial[trial]):(int(a_trial[trial])+window_Length),:22])
-             class_return[NO_valid_trial] = int(a_y[trial])
-             NO_valid_trial +=1        
+             start_idx = int(a_trial[trial].item())
+             data_return[NO_valid_trial,:,:] = np.transpose(a_X[start_idx : (start_idx + window_Length), :22])        # if a_y[trial] is a 1-element array
+             class_return[NO_valid_trial] = int(a_y[trial].item())
+             NO_valid_trial +=1     
     
 
     data_return = data_return[0:NO_valid_trial, :, t1:t2]

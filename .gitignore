@@ -1,3 +1,5 @@
-BCI2a/*
+BCI2a/
 .DS_Store
 **/.DS_Store
+__pycache__/
+**__pycache__/
