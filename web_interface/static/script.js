@@ -278,38 +278,32 @@ async function runBatch() {
 function renderChart(eegData) {
     const ctx = document.getElementById('eegChart').getContext('2d');
 
-    // Flatten or just take one channel? 
-    // eegData is (22, 1125). Showing 22 lines is chaotic.
-    // Let's show the first 3 channels for simplicity, or C3, Cz, C4.
-    // Channel mapping (approx): 0-21. Usually Cz is middle.
-    // Let's just show channels 7, 9, 11 (arbitrary selection for viz).
+    // BCI Competition IV 2a Standard Channel Order
+    const channelNames = [
+        'Fz', 'FC3', 'FC1', 'FCz', 'FC2', 'FC4',
+        'C5', 'C3', 'C1', 'Cz', 'C2', 'C4', 'C6',
+        'CP3', 'CP1', 'CPz', 'CP2', 'CP4',
+        'P1', 'Pz', 'P2', 'POz'
+    ];
 
-    // Construct labels (time points 0 to 1124)
+    // Construct labels (time points)
     const labels = Array.from({ length: eegData[0].length }, (_, i) => i);
 
-    const datasets = [
-        {
-            label: 'C3',
-            data: eegData[7],
-            borderColor: '#06b6d4',
+    const datasets = eegData.map((channelData, index) => {
+        // Generate a distinct color for each channel
+        // Using HSL to spread colors evenly
+        const hue = (index * 360 / 22) % 360;
+        const color = `hsl(${hue}, 70%, 50%)`;
+
+        return {
+            label: channelNames[index] || `Ch ${index + 1}`,
+            data: channelData,
+            borderColor: color,
             borderWidth: 1,
-            pointRadius: 0
-        },
-        {
-            label: 'Cz',
-            data: eegData[9],
-            borderColor: '#22c55e',
-            borderWidth: 1,
-            pointRadius: 0
-        },
-        {
-            label: 'C4',
-            data: eegData[11],
-            borderColor: '#ef4444',
-            borderWidth: 1,
-            pointRadius: 0
-        }
-    ];
+            pointRadius: 0,
+            hidden: false // Show all by default
+        };
+    });
 
     if (eegChart) {
         eegChart.destroy();
@@ -326,11 +320,11 @@ function renderChart(eegData) {
             maintainAspectRatio: false,
             interaction: {
                 intersect: false,
-                mode: 'index',
+                mode: 'nearest',
             },
             scales: {
                 x: {
-                    display: false, // Hide x-axis labels for clean look
+                    display: false,
                     grid: { color: 'rgba(255,255,255,0.05)' }
                 },
                 y: {
@@ -338,7 +332,23 @@ function renderChart(eegData) {
                 }
             },
             plugins: {
-                legend: { labels: { color: '#94a3b8' } }
+                legend: {
+                    labels: {
+                        color: '#94a3b8',
+                        boxWidth: 10,
+                        font: { size: 10 }
+                    },
+                    position: 'right', // Move legend to right sidebar style to avoid clutter
+                    maxHeight: 400
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            elements: {
+                line: { tension: 0.1 } // slight smoothing
             }
         }
     });
