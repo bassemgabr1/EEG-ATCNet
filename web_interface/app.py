@@ -34,7 +34,59 @@ CLASSES_LABELS = ['Left hand', 'Right hand', 'Foot', 'Tongue']
 MODELS_DIR_DEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models', 'subject-dependent')
 MODELS_DIR_INDEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models', 'subject-independent')
 
+# --- GPIO Setup ---
+# Use 'ACT' for built-in LED AND GPIO 17 for external pin
+GPIO_PINS = ['ACT', 17] 
+gpio_devices = []
+
+try:
+    from gpiozero import LED
+    for pin in GPIO_PINS:
+        try:
+            device = LED(pin)
+            gpio_devices.append(device)
+            print(f"GPIO {pin} initialized successfully.")
+        except Exception as e:
+            print(f"Failed to init GPIO {pin}: {e}")
+            
+except ImportError:
+    print("gpiozero not found. Running in simulation mode (Mock GPIO).")
+    class MockGPIO:
+        def __init__(self, pin): self.pin = pin
+        def on(self): print(f"[MOCK GPIO] Pin {self.pin} HIGH")
+        def off(self): print(f"[MOCK GPIO] Pin {self.pin} LOW")
+    
+    for pin in GPIO_PINS:
+        gpio_devices.append(MockGPIO(pin))
+
+except Exception as e:
+    print(f"GPIO initialization failed: {e}")
+
+
 # --- Helper Functions ---
+
+def trigger_gpio_signal():
+    """Turning GPIO pins High for 1 second in a background thread"""
+    import threading
+    def _pulse():
+        try:
+            # Turn ALL ON
+            for dev in gpio_devices:
+                dev.on()
+            
+            time.sleep(1.0)
+            
+            # Turn ALL OFF
+            for dev in gpio_devices:
+                dev.off()
+                
+        except Exception as e:
+            print(f"GPIO Trigger Error: {e}")
+    
+    # Start thread to not block the response
+    threading.Thread(target=_pulse).start()
+
+
 
 def load_dataset_if_needed(subject, loso):
     global CURRENT_DATA, CURRENT_CONFIG
@@ -214,6 +266,10 @@ def predict_route():
         true_class = int(np.argmax(y_true))
         confidence = float(y_pred_prob[0][pred_class])
         
+        # GPIO Trigger for Right hand (Class 1)
+        if CLASSES_LABELS[pred_class] == 'Right hand':
+            trigger_gpio_signal()
+            
         return jsonify({
             "predicted_class": pred_class,
             "predicted_label": CLASSES_LABELS[pred_class],
