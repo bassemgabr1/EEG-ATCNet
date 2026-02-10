@@ -35,50 +35,41 @@ MODELS_DIR_DEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__
 MODELS_DIR_INDEP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models', 'subject-independent')
 
 # --- GPIO Setup ---
-# Use 'ACT' for built-in LED AND GPIO 17 for external pin
-GPIO_PINS = ['ACT', 17] 
-gpio_devices = []
+# Use 'pinctrl' command line tool for Raspberry Pi 5 / recent OS
+GPIO_PIN = 17
 
-try:
-    from gpiozero import LED
-    for pin in GPIO_PINS:
-        try:
-            device = LED(pin)
-            gpio_devices.append(device)
-            print(f"GPIO {pin} initialized successfully.")
-        except Exception as e:
-            print(f"Failed to init GPIO {pin}: {e}")
-            
-except ImportError:
-    print("gpiozero not found. Running in simulation mode (Mock GPIO).")
-    class MockGPIO:
-        def __init__(self, pin): self.pin = pin
-        def on(self): print(f"[MOCK GPIO] Pin {self.pin} HIGH")
-        def off(self): print(f"[MOCK GPIO] Pin {self.pin} LOW")
-    
-    for pin in GPIO_PINS:
-        gpio_devices.append(MockGPIO(pin))
-
-except Exception as e:
-    print(f"GPIO initialization failed: {e}")
+def set_gpio(pin, level):
+    """
+    Control GPIO using pinctrl command.
+    level: 'dh' (Drive High) or 'dl' (Drive Low)
+    """
+    import subprocess
+    cmd = ["pinctrl", "set", str(pin), "op", level]
+    try:
+        # Run command, suppress output
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # print(f"GPIO {pin} set to {level}")
+    except FileNotFoundError:
+        # Running on non-Pi or pinctrl not installed
+        print(f"[MOCK CMD] {' '.join(cmd)}")
+    except Exception as e:
+        print(f"Error setting GPIO {pin}: {e}")
 
 
 # --- Helper Functions ---
 
 def trigger_gpio_signal():
-    """Turning GPIO pins High for 1 second in a background thread"""
+    """Turning GPIO pin 17 High for 3 seconds in a background thread"""
     import threading
     def _pulse():
         try:
-            # Turn ALL ON
-            for dev in gpio_devices:
-                dev.on()
+            # Turn ON (Drive High)
+            set_gpio(GPIO_PIN, 'dh')
             
-            time.sleep(1.0)
+            time.sleep(3.0)
             
-            # Turn ALL OFF
-            for dev in gpio_devices:
-                dev.off()
+            # Turn OFF (Drive Low)
+            set_gpio(GPIO_PIN, 'dl')
                 
         except Exception as e:
             print(f"GPIO Trigger Error: {e}")
